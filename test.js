@@ -7,9 +7,11 @@ function test() {
     console.log('[main] foo:', foo);
 }
 
-demodule(
+var code = demodule(
     [
         {name:"example", path:"./example"},
     ],
     ('('+test+')();')
 );
+
+eval(code);

@@ -32,9 +32,8 @@ function demodule(modules, mainCode, options) {
     //console.log("modules:\n", moduleInfos);
     var compacted = compactFiles(moduleInfos, mainCode);
 
-    console.log("compacted:\n", compacted);
-
-    eval(compacted);
+    //console.log("compacted:\n", compacted);
+    return compacted;
 }
 
 // Convert paths to absolute paths & make trailing slash for directories.
