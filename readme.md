@@ -6,11 +6,4 @@ Not for the faint of heart.
 
 Included are some builtins from the browserify project.
 
-## Development
-
-Install the CoffeeScript compiler, then:
-``` bash
-  cake build
-```
-
 (K)
