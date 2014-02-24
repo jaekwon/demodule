@@ -29,10 +29,10 @@ function demodule(modules, mainCode, options) {
         });
     });
 
-    //console.log("modules:\n", moduleInfos);
     var compacted = compactFiles(moduleInfos, mainCode);
 
-    //console.log("compacted:\n", compacted);
+    if (options.minify) { compacted = minifyCode(compacted); }
+
     return compacted;
 }
 
