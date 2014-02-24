@@ -12,13 +12,13 @@ require("sugar");
     If 'path' is a directory, the entry file is index.js,
       and all .js files are included recursively.
 */
-function demodule(modules, mainCode, options) {
+function demodule(modules, mainCode, options) { options = options||{};
 
     // Gather all modulePaths -> file.
     var moduleInfos = {};
 
     // Get present working directory.
-    var pwd = (options||{}).pwd || global.process.env.PWD;
+    var pwd = options.pwd || global.process.env.PWD;
 
     modules.forEach(function(module) {
         var name = module.name;
@@ -49,14 +49,16 @@ function canonical(pwd, path) {
 // Given a module path & (directory) path, get all the files in the module.
 // Returns an Array of objects {modulePath, relPath, code}
 function getModuleInfos(name, path) {
-    var rootDir     = path;
+    var rootDir     = getDirectory(path);
     var searchGlob  = path;
-    if (searchGlob.endsWith("/")) { searchGlob = searchGlob+"**/*.js"; }
+    var isDir       = path.endsWith("/");
+    if (isDir) { searchGlob = searchGlob+"**/*.js"; }
     return glob.sync(searchGlob).map(function(filePath) {
         if (!filePath.endsWith(".js")) { throw "filePath "+filePath+" isn't a javascript file."; }
         var code        = readFile(filePath);
         var relPath     = filePath.substring(rootDir.length, filePath.length-3);
         var modulePath  = name+"/"+relPath;
+        if (!isDir) { modulePath = name; }
         return {
             modulePath: modulePath,
             relPath:    relPath,
@@ -70,6 +72,14 @@ function isDirectory(path) {
     return fs.statSync(path).isDirectory();
 }
 
+// Gets the containing directory of a path with trailing slash.
+function getDirectory(path) {
+    var parts = path.split("/");
+    parts.pop(parts.length-1);
+    if (parts.length == 0) { return "/"; }
+    else { return parts.join("/")+"/"; }
+}
+
 function readFile(filePath) {
     return fs.readFileSync(filePath, 'utf8');
 }
@@ -81,12 +91,14 @@ function readFile(filePath) {
 // moduleFuncs: { <modulePath>: <moduleFunc> }
 function makeRequire(moduleFuncs) {
 
-    // This will always point to the current module path.
-    var currentModulePath = "__main__";
     // Modules will get cached here.
     var cache = {};
-    // The require function that gets called.
-    function require(path) {
+
+    function makeRequire(modulePath) {
+        return function(path) { return __require(modulePath, path); };
+    }
+
+    function __require(currentModulePath, path) {
         var resolvedPath = resolvePath(getDirectory(currentModulePath), path);
         if (Object.hasOwnProperty.call(cache, resolvedPath)) {
             return cache[resolvedPath];
@@ -94,13 +106,7 @@ function makeRequire(moduleFuncs) {
             var module = undefined;
             var moduleFunc = moduleFuncs[resolvedPath];
             if (!moduleFunc) { throw "Cannot find module '"+resolvedPath+"'"; }
-            var oldModulePath = currentModulePath;
-            currentModulePath = resolvedPath;
-            try {
-                module = cache[resolvedPath] = moduleFunc(cache, resolvedPath, getDirectory(resolvedPath));
-            } finally {
-                currentModulePath = oldModulePath;
-            }
+            module = cache[resolvedPath] = moduleFunc(cache, resolvedPath, getDirectory(resolvedPath), makeRequire(resolvedPath));
             return module;
         }
     }
@@ -136,12 +142,12 @@ function makeRequire(moduleFuncs) {
         else { return parts.join("/")+"/"; }
     }
 
-    return require;
+    return makeRequire("__main__");
 }
 
 function makeModuleFunc(info) {
     var funcCode = ""+
-    "(function(cache, modulePath, moduleDir) {\n"+
+    "(function(cache, modulePath, moduleDir, require) {\n"+
     "    return new function() {\n"+
     "        var exports = cache[modulePath] = this;\n"+
     "        var module = {exports: exports};\n"+

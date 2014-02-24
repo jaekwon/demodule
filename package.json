@@ -14,7 +14,7 @@
   "license": "(K)",
   "dependencies": {
       "glob":         ">= 3.2.8",
-      "uglify-js":    "git://github.com/jaekwon/UglifyJS.git",
+      "uglify-js":    "git://github.com/jaekwon/UglifyJS.git"
   },
   "devDependencies": {
   },
