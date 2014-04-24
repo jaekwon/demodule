@@ -21,6 +21,8 @@ function demodule(modules, mainCode, options) { options = options||{};
     var pwd = options.pwd || global.process.env.PWD;
 
     modules.forEach(function(module) {
+        if (!module.name) { throw "A module must have a name"; }
+        if (!module.path) { throw "Please specify a path for module '"+module.name+"'"; }
         var name = module.name;
         var path = canonical(pwd, module.path);
         var m = getModuleInfos(name, path);
@@ -28,6 +30,13 @@ function demodule(modules, mainCode, options) { options = options||{};
             moduleInfos[info.modulePath] = info;
         });
     });
+
+    if (options.debug) {
+        for (var path in moduleInfos) {
+            var info = moduleInfos[path];
+            console.log("Found module:", info.modulePath, "\n    ->", info.filePath);
+        }
+    }
 
     var compacted = compactFiles(moduleInfos, mainCode);
 
@@ -46,8 +55,8 @@ function canonical(pwd, path) {
     return path;
 }
 
-// Given a module path & (directory) path, get all the files in the module.
-// Returns an Array of objects {modulePath, relPath, code}
+// Given a module (root) name & filesystem path, get all the module files.
+// Returns an Array of objects {modulePath, fileName, filePath, code}
 function getModuleInfos(name, path) {
     var rootDir     = getDirectory(path);
     var searchGlob  = path;
@@ -56,12 +65,14 @@ function getModuleInfos(name, path) {
     return glob.sync(searchGlob).map(function(filePath) {
         if (!filePath.endsWith(".js")) { throw "filePath "+filePath+" isn't a javascript file."; }
         var code        = readFile(filePath);
-        var relPath     = filePath.substring(rootDir.length, filePath.length-3);
-        var modulePath  = name+"/"+relPath;
-        if (!isDir) { modulePath = name; }
+        var fileName    = filePath.substring(rootDir.length);
+        var modulePath;
+        if (isDir) { modulePath = name+"/"+fileName.substring(0, fileName.length-3); }
+        else       { modulePath = name; }
         return {
             modulePath: modulePath,
-            relPath:    relPath,
+            fileName:   fileName,
+            filePath:   filePath,
             code:       code,
         };
     });
@@ -87,34 +98,41 @@ function readFile(filePath) {
 // This is a function that will get serialized.
 // Thus this function must be self-containing with no references to
 //  outer variables.
-// It must not use sugar.js syntax.
 // moduleFuncs: { <modulePath>: <moduleFunc> }
 function makeRequire(moduleFuncs) {
 
     // Modules will get cached here.
     var cache = {};
 
-    function makeRequire(modulePath) {
+    function makeRequireFor(modulePath) {
         return function(path) { return __require(modulePath, path); };
     }
 
     function __require(currentModulePath, path) {
-        var resolvedPath = resolvePath(getDirectory(currentModulePath), path);
-        if (Object.hasOwnProperty.call(cache, resolvedPath)) {
-            return cache[resolvedPath];
-        } else {
-            var module = undefined;
-            var moduleFunc = moduleFuncs[resolvedPath];
-            if (!moduleFunc) { throw "Cannot find module '"+resolvedPath+"'"; }
-            module = cache[resolvedPath] = moduleFunc(cache, resolvedPath, getDirectory(resolvedPath), makeRequire(resolvedPath));
-            return module;
+        var resolvedPath = resolveRelativePath(getModuleDir(currentModulePath), path);
+        // console.log("resolveRelativePath(", getModuleDir(currentModulePath), ",", path, ") -> ", resolvedPath);
+
+        // Cached?
+        if (Object.hasOwnProperty.call(cache, resolvedPath)) { return cache[resolvedPath]; }
+
+        var module = undefined;
+        var moduleFunc = moduleFuncs[resolvedPath];
+        if (!moduleFunc) {
+            resolvedPath = resolvedPath+"/index";
+            moduleFunc = moduleFuncs[resolvedPath];
         }
+        if (!moduleFunc) {
+            console.log("currentModulePath: ", currentModulePath, "path:", path, "resolvedPath:", resolvedPath);
+            throw "Cannot find module '"+resolvedPath+"'";
+        }
+        module = cache[resolvedPath] = moduleFunc(cache, resolvedPath, getModuleDir(resolvedPath), makeRequireFor(resolvedPath));
+        return module;
     }
 
     // HELPER FUNCTIONS BELOW
-    // Given the current modulePath dir 'currentDir' & the required 'path',
-    // find which modulePath 'path' is referring to.
-    function resolvePath(currentDir, path) {
+
+    // This resolves '.' and '..' in the required 'path'
+    function resolveRelativePath(currentDir, path) {
         if (path[0] == ".") {
             path = currentDir+path;
         }
@@ -135,48 +153,52 @@ function makeRequire(moduleFuncs) {
     }
 
     // Gets the containing directory of a path with trailing slash.
-    function getDirectory(path) {
+    function getModuleDir(path) {
         var parts = path.split("/");
         parts.pop(parts.length-1);
         if (parts.length == 0) { return "/"; }
         else { return parts.join("/")+"/"; }
     }
 
-    return makeRequire("__main__");
+    return makeRequireFor("__main__");
 }
 
 function makeModuleFunc(info) {
-    var funcCode = ""+
+    var header = ""+
     "(function(cache, modulePath, moduleDir, require) {\n"+
     "    return new function() {\n"+
     "        var exports = cache[modulePath] = this;\n"+
     "        var module = {exports: exports};\n"+
     "        // var process = ...\n"+
     "        var __filename = modulePath;\n"+
-    "        var __dirname = moduleDir;\n"+
-    "\n"+
+    "        var __dirname = moduleDir;\n";
+
+    var body = "\n"+
     "// CODE "+info.modulePath+"\n"+
     info.code+
-    "// END CODE "+info.modulePath+"\n"+
-    "\n"+
+    "// END CODE "+info.modulePath+"\n";
+
+    var footer = "\n"+
     "        cache[modulePath] = module.exports;\n"+
     "        return module.exports;\n"+
     "    };\n"+
     "})"
-    return funcCode;
+
+    header = header.replace(/\n */g, '');
+    footer = footer.replace(/\n */g, '');
+    return header + body + footer;
 }
 
 function compactFiles(moduleInfos, mainCode) {
     var code = ""+
     "(function() {\n"+
     (''+makeRequire)+"\n"+
-    "    var moduleFuncs = {};\n";
+    "    var moduleFuncs = {};\n\n";
 
     // Insert module code
     for (var modulePath in moduleInfos) {
-    var info = moduleInfos[modulePath];
-    code += ""+
-    "    moduleFuncs['"+modulePath+"'] =\n"+makeModuleFunc(info)+";\n"
+        var info = moduleInfos[modulePath];
+        code += "moduleFuncs['"+modulePath+"'] = "+makeModuleFunc(info)+";\n\n"
     }
 
     code += ""+

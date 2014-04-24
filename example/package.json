@@ -1,0 +1,18 @@
+{
+    "name": "demodule_example_app",
+    "description": "example app for demodule",
+    "version": "0.0.1",
+    "main": "build/app.js",
+    "author": {
+        "name": "Jae Kwon",
+        "email": "jkwon.work@gmail.com"
+    },
+    "license": "(K)",
+    "dependencies": {
+        "demodule":     "jaekwon/demodule",
+        "underscore":   ""
+    },
+    "engine": {
+        "node": ">=0.6.0"
+    }
+}
