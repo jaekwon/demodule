@@ -1,7 +1,7 @@
 {
   "name": "demodule",
   "description": "bundle javascript files into one for the browser",
-  "version": "0.0.3",
+  "version": "0.0.8",
   "main": "demodule.js",
   "repository": {
     "type": "git",
