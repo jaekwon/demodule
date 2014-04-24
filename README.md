@@ -1,4 +1,5 @@
-# Demodule - CommonJS for the browser!
+# Demodule
+_CommonJS for the browser!_
 
 A simple tool to package javascript files into one using CommonJS module specification.<br/>
 If you want to structure your browser client code using CommonJS (like NodeJS's 'require()'), this is for you.
@@ -10,7 +11,7 @@ If you want to structure your browser client code using CommonJS (like NodeJS's 
 ## Example
 
 This is a sample build script using Demodule.<br/>
-You can see the full example in the `example` folder.
+You can see the full example in the [example](https://github.com/jaekwon/demodule/tree/master/example) folder.
 
 ```javascript
 var demodule = require("demodule");
@@ -43,4 +44,4 @@ if (err) { throw(err); }
 
 Requires NodeJS.
 
-See the example app for usage.
+See the [example app](https://github.com/jaekwon/demodule/tree/master/example) for usage.
