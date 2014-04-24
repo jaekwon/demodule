@@ -2,20 +2,22 @@
 _CommonJS for the browser!_
 
 A simple tool to package javascript files into one using CommonJS module specification.<br/>
-If you want to structure your browser client code using CommonJS (like NodeJS's 'require()'), this is for you.
 
 * Explicitly define which files to include
 * Recursive require() support
 * Minimization
+* Great for structuring client-side code
 
 ## Example
 
-This is a sample build script using Demodule.<br/>
 You can see the full example in the [example](https://github.com/jaekwon/demodule/tree/master/example) folder.
 
+First, define a build script in the root of your JS source folder that includes all of your dependencies.
+
 ```javascript
+// build_app.js
+
 var demodule = require("demodule");
-var fs = require("fs");
 
 var dependencies = [
     // a single file
@@ -26,18 +28,31 @@ var dependencies = [
 
     // a whole directory, recursively.
     {name:"lib", path:"./lib"},
-
-    // another whole directory
-    {name:"foo", path:"./foo"},
 ];
 
+// this gets run when the browser loads the file.
 var entry = 'require("app").run();';
 
+// package all the files into a string
 var code = demodule(dependencies, entry, {minify: false, debug:true});
 
-var err = fs.writeFileSync("build/app.js", code);
+// write the string to a file
+var err = require("fs").writeFileSync("build/app.js", code);
 
 if (err) { throw(err); }
+```
+
+Then, use `require()` in your code to import modules.
+
+```javascript
+// app.js
+
+var rand = require("lib/rand");
+
+// this gets called by the entry code passed to demodule.
+exports.run = function() { 
+    console.log(rand.randId(12));
+}; 
 ```
 
 ## Installation
