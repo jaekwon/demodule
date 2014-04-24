@@ -1,4 +1,4 @@
-# Demodule
+# ![alt tag](https://github.com/jaekwon/demodule/raw/image/demodule.png)
 
 A simple tool to package many javascript files into one.
 
@@ -8,7 +8,7 @@ A simple tool to package many javascript files into one.
 * Minimization
 * Great for structuring client-side code
 
-## Example
+### Example
 
 First, define a build script in the root of your JS source folder that includes all of your dependencies.
 
@@ -88,7 +88,7 @@ var entry = '('+entryFunction+')();';
 var code = demodule(dependencies, entry, options);
 ```
 
-## FAQ
+### FAQ
 
 __How does this compare to Browserify?__
 
@@ -107,7 +107,7 @@ Just call `npm install packageName`, or add it into your `package.json`'s depend
 Then, find the javascript files (or folders) you want to include and add them to your build script.<br/>
 This tool doesn't automatically add sub-dependencies from NPM libraries -- you need to locate them yourself.
 
-## Installation
+### Installation
 
 Requires NodeJS.
 
