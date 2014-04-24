@@ -13,8 +13,8 @@ A simple tool to package many javascript files into one.
 First, define a build script in the root of your JS source folder that includes all of your dependencies.
 
 ```javascript
-// build_app.js
 #!/usr/bin/env node
+// build_app.js
 
 var demodule = require("demodule");
 
@@ -63,8 +63,8 @@ The second argument to `demodule()` is the entry code. This is the snippet of co
 Here's a more advanced version:
 
 ```javascript
-// build_app.js
 #!/usr/bin/env node
+// build_app.js
 
 ...
 
