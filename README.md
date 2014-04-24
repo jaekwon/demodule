@@ -54,6 +54,50 @@ exports.run = function() {
     console.log(rand.randId(12));
 }; 
 ```
+ 
+### Entry Code
+
+The second argument to `demodule()` is the entry code. This is the snippet of code that gets run when the file is loaded on the browser.
+
+Here's a more advanced version:
+
+```javascript
+// This function gets serialized into a string.
+// This is just a convenient way to write the entry code.
+function entryFunction() {
+    console.log("Hello world!");
+
+    // Some libraries require the 'global' variable.
+    global = window;
+
+    // Expose the 'require' function for client-side debugging.
+    window.require = require;
+
+    // Run the main application code.
+    require("app").run();
+}
+var entry = '('+entryFunction+')();';
+
+// package all the files into a string
+var code = demodule(dependencies, entry, options);
+```
+
+## FAQ
+
+* How does this compare to Browserify?
+
+Browserify has a lot of magic to bring node.js server-side code over to the browser environment. This is a much simpler tool that gives you more control.<br/>
+Also, if two NPM libraries import different versions of another library, Browserify handles that by automatically packaging all of them. This tool doesn't.
+
+* Why isn't there a command-line tool?
+
+You need to declare the dependencies in a file anyways, so you might as well edit the build script, which is simple.
+
+* How do I add dependencies from NPM?
+
+Just call `npm install packageName`, or add it into your `package.json`'s dependency list as normal.<br/>
+Then, find the javascript files (or folders) you want to include and add them to your build script.<br/>
+This tool doesn't automatically add sub-dependencies from NPM libraries -- you need to locate them yourself.
 
 ## Installation
 

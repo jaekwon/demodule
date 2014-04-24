@@ -1,5 +1,6 @@
+#!/usr/bin/env node
+
 var demodule = require("demodule");
-var fs = require("fs");
 
 var dependencies = [
     // a single file
@@ -15,10 +16,13 @@ var dependencies = [
     {name:"foo", path:"./foo"},
 ];
 
+// this gets run when the browser loads the file.
 var entry = 'require("app").run();';
 
+// package all the files into a string
 var code = demodule(dependencies, entry, {minify: false, debug:true});
 
-var err = fs.writeFileSync("build/app.js", code);
+// write the string to a file
+var err = require("fs").writeFileSync("build/app.js", code);
 
 if (err) { throw(err); }

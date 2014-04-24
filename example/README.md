@@ -1,3 +1,10 @@
 This is a sample application that uses Demodule.
 
-Run 'make' to package a new javascript file into build/app.js
+Requires NodeJS
+
+Usage:
+
+	npm install .
+	./build_app.js
+
+This will package all the project files into `build/app.js`.
