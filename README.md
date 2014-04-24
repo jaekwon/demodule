@@ -1,10 +1,10 @@
 # Demodule
-_CommonJS for the browser!_
 
-A simple tool to package javascript files into one using CommonJS module specification.<br/>
+A simple tool to package many javascript files into one.
 
-* Explicitly define which files to include
-* Recursive require() support
+* Uses the CommonJS specification (`require()`)
+* Control which files to include
+* Recursive `require()` support
 * Minimization
 * Great for structuring client-side code
 
@@ -14,6 +14,7 @@ First, define a build script in the root of your JS source folder that includes 
 
 ```javascript
 // build_app.js
+#!/usr/bin/env node
 
 var demodule = require("demodule");
 
@@ -62,6 +63,11 @@ The second argument to `demodule()` is the entry code. This is the snippet of co
 Here's a more advanced version:
 
 ```javascript
+// build_app.js
+#!/usr/bin/env node
+
+...
+
 // This function gets serialized into a string.
 // This is just a convenient way to write the entry code.
 function entryFunction() {
@@ -86,12 +92,14 @@ var code = demodule(dependencies, entry, options);
 
 __How does this compare to Browserify?__
 
-Browserify has a lot of magic to bring node.js server-side code over to the browser environment. This is a much simpler tool that gives you more control.<br/>
-Also, if two NPM libraries import different versions of another library, Browserify handles that by automatically packaging all of them. This tool doesn't.
+Browserify has a lot of magic to bring node.js server-side code over to the browser environment.<br/>
+This is a much simpler tool that gives you more control.<br/>
+For example, if two NPM libraries import different versions of another library, Browserify handles that by automatically packaging all of them.<br/>
+This tool doesn't.
 
 __Why isn't there a command-line tool?__
 
-You need to declare the dependencies in a file anyways, so you might as well edit the build script, which is simple.
+You need to declare the dependencies in a file anyways, so you might as well edit the build script.
 
 __How do I add dependencies from NPM?__
 
