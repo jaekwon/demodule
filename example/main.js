@@ -7,9 +7,6 @@ var lib = require("lib");
 // here's a simple test.
 var foo = require("foo");
 
-// in the __main__ module, the exported "run" function gets called automatically.
-exports.run = function() {
-    console.log(rand.randId(12));   // some random junk
-    console.log(rand == lib.rand);  // true
-    console.log(foo.test());        // what does the fox say?
-};
+console.log(rand.randId(12));   // some random junk
+console.log(rand == lib.rand);  // true
+console.log(foo.test());        // what does the fox say?

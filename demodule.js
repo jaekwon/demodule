@@ -222,8 +222,7 @@ function build(moduleInfos) {
 
     code += ""+
     "    var require = makeRequire(moduleFuncs);\n"+
-    "    var main = require('__main__');\n"+
-    "    main.run();\n"+
+    "    require('__main__');\n"+
     "})();\n"
     return code;
 }
@@ -232,14 +231,12 @@ function build(moduleInfos) {
 // becomes the main module.
 // NOTE: This is meant to get serialized to a string.
 var defaultMainFunction = function() {
-    exports.run = function() {
-        if (typeof window == "object") {
-            window.require = require;
-        }
-        else if (typeof global == "object") {
-            global.require = require;
-        }
-    };
+    if (typeof window == "object") {
+        window.require = require;
+    }
+    else if (typeof global == "object") {
+        global.require = require;
+    }
 }
 var defaultMainCode = (''+defaultMainFunction);
 

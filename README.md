@@ -42,11 +42,7 @@ Then, use `require()` in your code to import modules.
 // main.js
 
 var rand = require("lib/rand");
-
-// in the __main__ module, the exported "run" function gets called automatically.
-exports.run = function() { 
-    console.log(rand.randId(12));
-}; 
+console.log(rand.randId(12));
 ```
 
 Check out the [full example](https://github.com/jaekwon/demodule/tree/master/example).
