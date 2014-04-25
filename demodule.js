@@ -30,7 +30,7 @@ function demodule(moduleInfos, options) { options = options||{};
         });
     });
 
-    // If the user didn't over __main__, make a default one.
+    // If the user didn't declare __main__, make a default one.
     if (!modules["__main__"]) {
         modules["__main__"] = {
             name:       "__main__",
@@ -93,12 +93,10 @@ function getModules(rootName, path) {
     });
 }
 
-// Returns true if path is a directory.
 function isDirectory(path) {
     return fs.statSync(path).isDirectory();
 }
 
-// Gets the containing directory of a path with trailing slash.
 function getDirectory(path) {
     var parts = path.split("/");
     parts.pop(parts.length-1);
@@ -220,8 +218,6 @@ function build(modules) {
     return code;
 }
 
-// If the user doesn't specify the __main__ module, this
-// becomes the main module.
 // NOTE: This is meant to get serialized to a string.
 var defaultMainFunction = function() {
     if (typeof window == "object") {
