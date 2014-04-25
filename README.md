@@ -2,11 +2,12 @@
 
 A simple tool to package many javascript files into one.
 
-* Uses the CommonJS specification (`require()`)
+* CommonJS module specification (`require()`) like NodeJS
 * Control which files to include
 * Recursive `require()` support
-* Minimization
+* Relative module paths support
 * Great for structuring client-side code
+* Minimization optional
 
 ## Example
 
@@ -16,9 +17,8 @@ First, define a build script in the root of your JS source folder that includes 
 #!/usr/bin/env node
 // build_app.js
 
-var demodule = require("demodule");
-
 var dependencies = [
+
     // the entrypoint, a single file.
     {name:"__main__", path:"./main.js"},
 
@@ -28,11 +28,10 @@ var dependencies = [
     // a whole directory, recursively.
     {name:"lib", path:"./lib"},
 
-    // another whole directory
-    {name:"foo", path:"./foo"},
 ];
 
 // package all the files into a string
+var demodule = require("demodule");
 demodule(dependencies, {minify: false, debug:true, output:"build/app.js"});
 ```
 
