@@ -1,4 +1,4 @@
-This is a sample application that uses Demodule.
+This is a sample application that uses the [Demodule](https://github.com/jaekwon/demodule) packager.
 
 Requires NodeJS
 
