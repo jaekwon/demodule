@@ -1,11 +1,10 @@
 (function() {
     var makeRequire = (function (moduleFuncs) {
 
-    // Modules will get cached here.
     var cache = {};
 
-    function makeRequireFor(modulePath) {
-        return function(path) { return __require(modulePath, path); };
+    function makeRequireFor(name) {
+        return function(path) { return __require(name, path); };
     }
 
     function __require(currentModulePath, path) {
@@ -31,7 +30,6 @@
 
     // HELPER FUNCTIONS BELOW
 
-    // This resolves '.' and '..' in the required 'path'
     function resolveRelativePath(currentDir, path) {
         if (path[0] == ".") {
             path = currentDir+path;
@@ -52,7 +50,6 @@
         return resolvedParts.join("/");
     }
 
-    // Gets the containing directory of a path with trailing slash.
     function getModuleDir(path) {
         var parts = path.split("/");
         parts.pop(parts.length-1);
@@ -64,7 +61,7 @@
 });
     var moduleFuncs = {};
 
-moduleFuncs['__main__'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['__main__'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE __main__
 // rand is the exported namespace the 'lib/rand.js' file.
 var rand = require("lib/rand");
@@ -79,9 +76,9 @@ console.log(rand.randId(12));   // some random junk
 console.log(rand == lib.rand);  // true
 console.log(foo.test());        // what does the fox say?
 // END CODE __main__
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['underscore'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['underscore'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE underscore
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
@@ -1427,9 +1424,9 @@ moduleFuncs['underscore'] = (function(cache, modulePath, moduleDir, require) {re
   }
 }).call(this);
 // END CODE underscore
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['lib/index'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['lib/index'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE lib/index
 // This is an optional index file.
 // This allows you to call require("lib").*
@@ -1438,9 +1435,9 @@ module.exports = {
     rand:   require("./rand"),  
 }
 // END CODE lib/index
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['lib/rand'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['lib/rand'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE lib/rand
 // e.g. randId(5) -> "aEs12"
 function randId(len) {
@@ -1454,44 +1451,44 @@ function randId(len) {
 
 exports.randId = randId;
 // END CODE lib/rand
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['foo/bar'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['foo/bar'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE foo/bar
 // test relative import
 exports.test = require("./baz").test;
 // END CODE foo/bar
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['foo/baz'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['foo/baz'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE foo/baz
 // test absolute import
 exports.test = require("foo/cat").test;
 // END CODE foo/baz
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['foo/cat'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['foo/cat'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE foo/cat
 // test recursive directory import
 exports.test = require("./inner/dog").test;
 // END CODE foo/cat
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['foo/index'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['foo/index'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE foo/index
 // test relative import
 exports.test = require("./bar").test;
 // END CODE foo/index
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['foo/inner/dog'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['foo/inner/dog'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE foo/inner/dog
 // test relative ../ import
 exports.test = require("../inner/emu").test;
 // END CODE foo/inner/dog
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['foo/inner/emu'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['foo/inner/emu'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE foo/inner/emu
 // test recursive import
 
@@ -1501,9 +1498,9 @@ exports.something = function() {
 
 exports.test = require("./fox").test;
 // END CODE foo/inner/emu
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
-moduleFuncs['foo/inner/fox'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+moduleFuncs['foo/inner/fox'] = (function(cache, name, moduleDir, require) {return new function() {var exports = cache[name] = this;var module = {exports: exports};// var process = ...var __filename = name;var __dirname = moduleDir;
 // CODE foo/inner/fox
 // test recursive import, continued...
 var emu = require("./emu");
@@ -1516,7 +1513,7 @@ exports.test = function() {
     }
 }
 // END CODE foo/inner/fox
-cache[modulePath] = module.exports;return module.exports;};});
+cache[name] = module.exports;return module.exports;};});
 
     var require = makeRequire(moduleFuncs);
     require('__main__');

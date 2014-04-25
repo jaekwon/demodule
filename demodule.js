@@ -6,7 +6,7 @@ var fs = require("fs");
 require("sugar");
 
 /*
-    modules: An array of {name, path}
+    moduleInfos: An array of {name, path}
       name:   Can contain slashes, but must not end in a slash.
       path:   Is a file or folder.
     options:
@@ -14,29 +14,26 @@ require("sugar");
       debug:  Print debug information during the build.
       output: Output file name.
 */
-function demodule(modules, options) { options = options||{};
+function demodule(moduleInfos, options) { options = options||{};
 
-    // Gather all modulePaths -> file.
-    var moduleInfos = {};
-
-    // Get present working directory.
+    var modules = {};
     var pwd = options.pwd || global.process.env.PWD;
 
-    modules.forEach(function(module) {
-        if (!module.name) { throw "A module must have a name"; }
-        if (!module.path) { throw "Please specify a path for module '"+module.name+"'"; }
-        var name = module.name;
-        var path = canonical(pwd, module.path);
-        var m = getModuleInfos(name, path);
-        m.forEach(function(info) {
-            moduleInfos[info.modulePath] = info;
+    moduleInfos.forEach(function(info) {
+        if (!info.name) { throw "A module must have a name"; }
+        if (!info.path) { throw "Please specify a path for module '"+info.name+"'"; }
+        var rootName = info.name;
+        var path = canonical(pwd, info.path);
+        var ms = getModules(rootName, path);
+        ms.forEach(function(module) {
+            modules[module.name] = module;
         });
     });
 
     // If the user didn't over __main__, make a default one.
-    if (!moduleInfos["__main__"]) {
-        moduleInfos["__main__"] = {
-            modulePath: "__main__",
+    if (!modules["__main__"]) {
+        modules["__main__"] = {
+            name:       "__main__",
             fileName:   "__main__",
             filePath:   "__main__",
             code:       "("+defaultMainCode+")()",
@@ -44,14 +41,14 @@ function demodule(modules, options) { options = options||{};
     }
 
     if (options.debug) {
-        for (var path in moduleInfos) {
-            var info = moduleInfos[path];
-            console.log("Found module:", info.modulePath, "\n    ->", info.filePath);
+        for (var path in modules) {
+            var module = modules[path];
+            console.log("Found module:", module.name, "\n    ->", module.filePath);
         }
     }
 
     // Build and maybe minify code.
-    var compacted = build(moduleInfos);
+    var compacted = build(modules);
     if (options.minify) { compacted = minifyCode(compacted); }
 
     // write the string to a file.
@@ -73,9 +70,9 @@ function canonical(pwd, path) {
     return path;
 }
 
-// Given a module (root) name & filesystem path, get all the module files.
-// Returns an Array of objects {modulePath, fileName, filePath, code}
-function getModuleInfos(name, path) {
+// Given a module root name & filesystem path, get all the module files.
+// Returns an Array of objects {name, fileName, filePath, code}
+function getModules(rootName, path) {
     var rootDir     = getDirectory(path);
     var searchGlob  = path;
     var isDir       = isDirectory(path);
@@ -84,11 +81,11 @@ function getModuleInfos(name, path) {
         if (!filePath.endsWith(".js")) { throw "filePath "+filePath+" isn't a javascript file."; }
         var code        = readFile(filePath);
         var fileName    = filePath.substring(rootDir.length);
-        var modulePath;
-        if (isDir) { modulePath = name+"/"+fileName.substring(0, fileName.length-3); }
-        else       { modulePath = name; }
+        var name;
+        if (isDir) { name = rootName+"/"+fileName.substring(0, fileName.length-3); }
+        else       { name = rootName; }
         return {
-            modulePath: modulePath,
+            name:       name,
             fileName:   fileName,
             filePath:   filePath,
             code:       code,
@@ -113,15 +110,14 @@ function readFile(filePath) {
     return fs.readFileSync(filePath, 'utf8');
 }
 
-// moduleFuncs: { <modulePath>: <moduleFunc> }
+// Returns the original 'require' function.
 // NOTE: This is meant to get serialized to a string.
 var makeRequireFunction = function(moduleFuncs) {
 
-    // Modules will get cached here.
     var cache = {};
 
-    function makeRequireFor(modulePath) {
-        return function(path) { return __require(modulePath, path); };
+    function makeRequireFor(name) {
+        return function(path) { return __require(name, path); };
     }
 
     function __require(currentModulePath, path) {
@@ -147,7 +143,6 @@ var makeRequireFunction = function(moduleFuncs) {
 
     // HELPER FUNCTIONS BELOW
 
-    // This resolves '.' and '..' in the required 'path'
     function resolveRelativePath(currentDir, path) {
         if (path[0] == ".") {
             path = currentDir+path;
@@ -168,7 +163,6 @@ var makeRequireFunction = function(moduleFuncs) {
         return resolvedParts.join("/");
     }
 
-    // Gets the containing directory of a path with trailing slash.
     function getModuleDir(path) {
         var parts = path.split("/");
         parts.pop(parts.length-1);
@@ -181,23 +175,23 @@ var makeRequireFunction = function(moduleFuncs) {
 var makeRequireCode = (''+makeRequireFunction);
 
 // Creates a string that wraps the given module into its own closure.
-function makeModuleFunc(moduleInfo) {
+function makeModuleFunc(modules) {
     var header = ""+
-    "(function(cache, modulePath, moduleDir, require) {\n"+
+    "(function(cache, name, moduleDir, require) {\n"+
     "    return new function() {\n"+
-    "        var exports = cache[modulePath] = this;\n"+
+    "        var exports = cache[name] = this;\n"+
     "        var module = {exports: exports};\n"+
     "        // var process = ...\n"+
-    "        var __filename = modulePath;\n"+
+    "        var __filename = name;\n"+
     "        var __dirname = moduleDir;\n";
 
     var body = "\n"+
-    "// CODE "+moduleInfo.modulePath+"\n"+
-    moduleInfo.code+
-    "// END CODE "+moduleInfo.modulePath+"\n";
+    "// CODE "+modules.name+"\n"+
+    modules.code+
+    "// END CODE "+modules.name+"\n";
 
     var footer = "\n"+
-    "        cache[modulePath] = module.exports;\n"+
+    "        cache[name] = module.exports;\n"+
     "        return module.exports;\n"+
     "    };\n"+
     "})"
@@ -208,16 +202,15 @@ function makeModuleFunc(moduleInfo) {
 }
 
 // Package modules into a single string.
-function build(moduleInfos) {
+function build(modules) {
     var code = ""+
     "(function() {\n"+
     "    var makeRequire = ("+makeRequireCode+");\n"+
     "    var moduleFuncs = {};\n\n";
 
-    // Insert module code
-    for (var modulePath in moduleInfos) {
-        var info = moduleInfos[modulePath];
-        code += "moduleFuncs['"+modulePath+"'] = "+makeModuleFunc(info)+";\n\n"
+    for (var name in modules) {
+        var module = modules[name];
+        code += "moduleFuncs['"+name+"'] = "+makeModuleFunc(module)+";\n\n"
     }
 
     code += ""+
