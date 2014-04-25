@@ -7,12 +7,14 @@ require("sugar");
 
 /*
     modules: An array of {name, path}
-    'name' can contain slashes, but must not end in a slash.
-    'path' is a file, directory, or glob.
-    If 'path' is a directory, the entry file is index.js,
-      and all .js files are included recursively.
+      name:   Can contain slashes, but must not end in a slash.
+      path:   Is a file or folder.
+    options:
+      minify: Minify the code using uglify.
+      debug:  Print debug information during the build.
+      output: Output file name.
 */
-function demodule(modules, mainCode, options) { options = options||{};
+function demodule(modules, options) { options = options||{};
 
     // Gather all modulePaths -> file.
     var moduleInfos = {};
@@ -31,6 +33,16 @@ function demodule(modules, mainCode, options) { options = options||{};
         });
     });
 
+    // If the user didn't over __main__, make a default one.
+    if (!moduleInfos["__main__"]) {
+        moduleInfos["__main__"] = {
+            modulePath: "__main__",
+            fileName:   "__main__",
+            filePath:   "__main__",
+            code:       "("+defaultMainCode+")()",
+        };
+    }
+
     if (options.debug) {
         for (var path in moduleInfos) {
             var info = moduleInfos[path];
@@ -38,9 +50,15 @@ function demodule(modules, mainCode, options) { options = options||{};
         }
     }
 
-    var compacted = compactFiles(moduleInfos, mainCode);
-
+    // Build and maybe minify code.
+    var compacted = build(moduleInfos);
     if (options.minify) { compacted = minifyCode(compacted); }
+
+    // write the string to a file.
+    if (options.output) {
+        var err = require("fs").writeFileSync(options.output, compacted);
+        if (err) { throw(err); }
+    }
 
     return compacted;
 }
@@ -60,7 +78,7 @@ function canonical(pwd, path) {
 function getModuleInfos(name, path) {
     var rootDir     = getDirectory(path);
     var searchGlob  = path;
-    var isDir       = path.endsWith("/");
+    var isDir       = isDirectory(path);
     if (isDir) { searchGlob = searchGlob+"**/*.js"; }
     return glob.sync(searchGlob).map(function(filePath) {
         if (!filePath.endsWith(".js")) { throw "filePath "+filePath+" isn't a javascript file."; }
@@ -95,11 +113,9 @@ function readFile(filePath) {
     return fs.readFileSync(filePath, 'utf8');
 }
 
-// This is a function that will get serialized.
-// Thus this function must be self-containing with no references to
-//  outer variables.
 // moduleFuncs: { <modulePath>: <moduleFunc> }
-function makeRequire(moduleFuncs) {
+// NOTE: This is meant to get serialized to a string.
+var makeRequireFunction = function(moduleFuncs) {
 
     // Modules will get cached here.
     var cache = {};
@@ -162,8 +178,10 @@ function makeRequire(moduleFuncs) {
 
     return makeRequireFor("__main__");
 }
+var makeRequireCode = (''+makeRequireFunction);
 
-function makeModuleFunc(info) {
+// Creates a string that wraps the given module into its own closure.
+function makeModuleFunc(moduleInfo) {
     var header = ""+
     "(function(cache, modulePath, moduleDir, require) {\n"+
     "    return new function() {\n"+
@@ -174,9 +192,9 @@ function makeModuleFunc(info) {
     "        var __dirname = moduleDir;\n";
 
     var body = "\n"+
-    "// CODE "+info.modulePath+"\n"+
-    info.code+
-    "// END CODE "+info.modulePath+"\n";
+    "// CODE "+moduleInfo.modulePath+"\n"+
+    moduleInfo.code+
+    "// END CODE "+moduleInfo.modulePath+"\n";
 
     var footer = "\n"+
     "        cache[modulePath] = module.exports;\n"+
@@ -189,10 +207,11 @@ function makeModuleFunc(info) {
     return header + body + footer;
 }
 
-function compactFiles(moduleInfos, mainCode) {
+// Package modules into a single string.
+function build(moduleInfos) {
     var code = ""+
     "(function() {\n"+
-    (''+makeRequire)+"\n"+
+    "    var makeRequire = ("+makeRequireCode+");\n"+
     "    var moduleFuncs = {};\n\n";
 
     // Insert module code
@@ -203,15 +222,26 @@ function compactFiles(moduleInfos, mainCode) {
 
     code += ""+
     "    var require = makeRequire(moduleFuncs);\n"+
-    "    // delete moduleFuncs.\n"+
-    "    // delete makeRequire.\n"+
-    "\n"+
-    "// CODE __main__\n"+
-    mainCode+"\n"+
-    "// END CODE __main__\n"+
+    "    var main = require('__main__');\n"+
+    "    main.run();\n"+
     "})();\n"
     return code;
 }
+
+// If the user doesn't specify the __main__ module, this
+// becomes the main module.
+// NOTE: This is meant to get serialized to a string.
+var defaultMainFunction = function() {
+    exports.run = function() {
+        if (typeof window == "object") {
+            window.require = require;
+        }
+        else if (typeof global == "object") {
+            global.require = require;
+        }
+    };
+}
+var defaultMainCode = (''+defaultMainFunction);
 
 function minifyCode(code) {
     return uglify.gen_code(uglify.ast_squeeze(uglify.ast_mangle(parser.parse(code), {ascii_only:true}))); // issue on chrome on ubuntu

@@ -1,5 +1,5 @@
 (function() {
-function makeRequire(moduleFuncs) {
+    var makeRequire = (function (moduleFuncs) {
 
     // Modules will get cached here.
     var cache = {};
@@ -61,11 +61,11 @@ function makeRequire(moduleFuncs) {
     }
 
     return makeRequireFor("__main__");
-}
+});
     var moduleFuncs = {};
 
-moduleFuncs['app'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
-// CODE app
+moduleFuncs['__main__'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
+// CODE __main__
 // rand is the exported namespace the 'lib/rand.js' file.
 var rand = require("lib/rand");
 
@@ -75,13 +75,13 @@ var lib = require("lib");
 // here's a simple test.
 var foo = require("foo");
 
-// this gets called by the entry code passed to demodule.
+// in the __main__ module, the exported "run" function gets called automatically.
 exports.run = function() {
     console.log(rand.randId(12));   // some random junk
     console.log(rand == lib.rand);  // true
     console.log(foo.test());        // what does the fox say?
 };
-// END CODE app
+// END CODE __main__
 cache[modulePath] = module.exports;return module.exports;};});
 
 moduleFuncs['underscore'] = (function(cache, modulePath, moduleDir, require) {return new function() {var exports = cache[modulePath] = this;var module = {exports: exports};// var process = ...var __filename = modulePath;var __dirname = moduleDir;
@@ -1522,10 +1522,6 @@ exports.test = function() {
 cache[modulePath] = module.exports;return module.exports;};});
 
     var require = makeRequire(moduleFuncs);
-    // delete moduleFuncs.
-    // delete makeRequire.
-
-// CODE __main__
-require("app").run();
-// END CODE __main__
+    var main = require('__main__');
+    main.run();
 })();
