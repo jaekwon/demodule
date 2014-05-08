@@ -2,12 +2,12 @@
 
 A simple tool to package many javascript files into one.
 
-* CommonJS module specification (`require()`) like NodeJS
+* CommonJS module specification (like NodeJS's `require()`)
 * Control which files to include
-* Recursive `require()` support
+* Circular `require()` support
 * Relative module paths support
 * Great for structuring client-side code
-* Minimization optional
+* Optional minimization
 
 ## Example
 
