@@ -5,6 +5,6 @@ exports.test = function() {
     if (emu.something() == "SOMETHING") {
         return "what does the fox say?";
     } else {
-        return "recursive import is broken";
+        return "circular import is broken";
     }
 }
