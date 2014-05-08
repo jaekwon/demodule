@@ -1,4 +1,4 @@
-// test recursive import
+// test circular import
 
 exports.something = function() {
     return "SOMETHING";
