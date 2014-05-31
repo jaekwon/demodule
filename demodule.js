@@ -179,7 +179,7 @@ function makeModuleFunc(modules) {
     "    return new function() {\n"+
     "        var exports = cache[name] = this;\n"+
     "        var module = {exports: exports};\n"+
-    "        // var process = ...\n"+
+    //"        var process = ...\n"+
     "        var __filename = name;\n"+
     "        var __dirname = moduleDir;\n";
 
